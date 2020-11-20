@@ -1,4 +1,4 @@
-﻿-- Diner_restaurant_kpr.sql:	This script creates a database for the management of booking and invoice of a restaurant
+﻿-- Diner_restaurant_fbn.sql:	This script creates a database for the management of booking and invoice of a restaurant
 --				The database is initialized with fake data and data coming from the restaurant "Hotel de Ville" in Echallens
 --				
 -- Version:		1.0, novembre 2018
@@ -12,15 +12,24 @@
 USE master
 GO
 
-alter database Diner_restaurant_fbn set single_user with rollback immediate;
-DROP DATABASE IF EXISTS Diner_restaurant_fbn;
+IF EXISTS(select * from sys.databases where name='Diner_restaurant_fbn')
+alter database [Diner_restaurant_fbn] set single_user with rollback immediate;
+DROP DATABASE IF EXISTS [Diner_restaurant_fbn];
+GO
 
-CREATE DATABASE Diner_restaurant_fbn;
+CREATE DATABASE [Diner_restaurant_fbn]
+GO
 
 USE [Diner_restaurant_fbn]
 GO
 
+CREATE TABLE [dbo].[Table](
+	[idTable] [int] IDENTITY(1,1) NOT NULL,
+	[capacity] [tinyint] NULL,
+ CONSTRAINT [PK_Table] PRIMARY KEY CLUSTERED ([idTable] ASC)
+) ON [PRIMARY]
 GO
+
 CREATE TABLE [dbo].[Booking](
 	[idBooking] [int] IDENTITY(1,1) NOT NULL,
 	[dateBooking] [datetime] NULL,
@@ -28,18 +37,9 @@ CREATE TABLE [dbo].[Booking](
 	[phonenumber] [varchar](20) NULL,
 	[lastname] [varchar](35) NULL,
 	[firstname] [varchar](35) NULL,
-	[fkTable] [int] NULL,
- CONSTRAINT [PK_Booking] PRIMARY KEY CLUSTERED ([idBooking] ASC)
-) ON [PRIMARY]
-GO
-
-CREATE TABLE [dbo].[Dish](
-	[idDish] [int] IDENTITY(1,1) NOT NULL,
-	[dishDescription] [varchar](100) NULL,
-	[fkDishType] [int] NULL,
-	[fkMenu] [int] NULL,
-	[AmountWithTaxes] [decimal](5, 2) NULL,
- CONSTRAINT [PK_Dish] PRIMARY KEY CLUSTERED ([idDish] ASC)
+	[fkTable] [int] NULL FOREIGN KEY REFERENCES [Table]([idTable]),
+ CONSTRAINT [PK_Booking] PRIMARY KEY CLUSTERED ([idBooking] ASC),
+ CONSTRAINT chk_booking_date CHECK([dateBooking] >= GETDATE() AND [dateBooking] != (DATEADD(month, +2, GETDATE()))),
 ) ON [PRIMARY]
 GO
 
@@ -47,31 +47,6 @@ CREATE TABLE [dbo].[DishType](
 	[idDishType] [int] IDENTITY(1,1) NOT NULL,
 	[DishTypeName] [varchar](100) NULL,
  CONSTRAINT [PK_DishType] PRIMARY KEY CLUSTERED ([idDishType] ASC)
-) ON [PRIMARY]
-GO
-
-CREATE TABLE [dbo].[Invoice](
-	[idInvoice] [int] IDENTITY(1,1) NOT NULL,
-	[invoiceNumber] [varchar](45) NULL,
-	[totalAmountWithTaxes] [decimal](10, 2) NULL,
-	[totalAmountWithoutTaxes] [decimal](10, 2) NULL,
-	[invoiceDate] [datetime] NULL,
-	[fkWaiter] [int] NULL,
-	[fkTable] [int] NULL,
-	[fkPaymentCond] [int] NULL,
- CONSTRAINT [PK_Invoice] PRIMARY KEY CLUSTERED ([idInvoice] ASC)
-) ON [PRIMARY]
-GO
-
-CREATE TABLE [dbo].[InvoiceDetail](
-	[idInvoiceDetail] [int] IDENTITY(1,1) NOT NULL,
-	[quantity] [int] NULL,
-	[amountWithoutTaxes] [decimal](10, 2) NULL,
-	[fkInvoice] [int] NULL,
-	[fkTaxRate] [decimal](4, 2) NULL,
-	[fkMenu] [int] NULL,
-	[fkDish] [int] NULL,
- CONSTRAINT [PK_InvoiceDetail] PRIMARY KEY CLUSTERED ([idInvoiceDetail] ASC)
 ) ON [PRIMARY]
 GO
 
@@ -83,6 +58,16 @@ CREATE TABLE [dbo].[Menu](
 ) ON [PRIMARY]
 GO
 
+CREATE TABLE [dbo].[Dish](
+	[idDish] [int] IDENTITY(1,1) NOT NULL,
+	[dishDescription] [varchar](100) NULL,
+	[fkDishType] [int] NOT NULL FOREIGN KEY REFERENCES [DishType](idDishType),
+	[fkMenu] [int] NULL FOREIGN KEY REFERENCES [Menu]([idMenu]),
+	[AmountWithTaxes] [decimal](5, 2) NULL,
+ CONSTRAINT [PK_Dish] PRIMARY KEY CLUSTERED ([idDish] ASC)
+) ON [PRIMARY]
+GO
+
 CREATE TABLE [dbo].[PaymentCondition](
 	[idPaymentCond] [int] IDENTITY(1,1) NOT NULL,
 	[description] [varchar](100) NULL,
@@ -91,11 +76,21 @@ CREATE TABLE [dbo].[PaymentCondition](
 ) ON [PRIMARY]
 GO
 
+CREATE TABLE [dbo].[Waiter](
+	[idWaiter] [int] IDENTITY(1,1) NOT NULL,
+	[firstName] [varchar](35) NOT NULL,
+	[lastName] [varchar](35) NOT NULL,
+ CONSTRAINT [PK_Waiter] PRIMARY KEY CLUSTERED ([idWaiter] ASC),
+ UNIQUE (firstName, lastName),
+) ON [PRIMARY]
+GO
+
 CREATE TABLE [dbo].[Planning](
 	[idPlanning] [int] IDENTITY(1,1) NOT NULL,
 	[dateWork] [datetime] NULL,
-	[fkWaiter] [int] NULL,
- CONSTRAINT [PK_Planning] PRIMARY KEY CLUSTERED ([idPlanning] ASC)
+	[fkWaiter] [int] NULL FOREIGN KEY REFERENCES [Waiter](idWaiter) ON DELETE CASCADE,
+ CONSTRAINT [PK_Planning] PRIMARY KEY CLUSTERED ([idPlanning] ASC),
+ CONSTRAINT chk_planing_date CHECK([dateWork] >= GETDATE())
 ) ON [PRIMARY]
 GO
 
@@ -106,20 +101,6 @@ CREATE TABLE [dbo].[Responsible](
 ) ON [PRIMARY]
 GO
 
-CREATE TABLE [dbo].[Table](
-	[idTable] [int] IDENTITY(1,1) NOT NULL,
-	[capacity] [tinyint] NULL,
- CONSTRAINT [PK_Table] PRIMARY KEY CLUSTERED 
-(
-	[idTable] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-/****** Object:  Table [dbo].[TaxRate]    Script Date: 20.11.2020 11:48:32 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 CREATE TABLE [dbo].[TaxRate](
 	[taxRateValue] [decimal](4, 2) NOT NULL,
 	[description] [varchar](100) NULL,
@@ -127,74 +108,30 @@ CREATE TABLE [dbo].[TaxRate](
 ) ON [PRIMARY]
 GO
 
-CREATE TABLE [dbo].[Waiter](
-	[idWaiter] [int] IDENTITY(1,1) NOT NULL,
-	[firstName] [varchar](35) NULL,
-	[lastName] [varchar](35) NULL,
- CONSTRAINT [PK_Waiter] PRIMARY KEY CLUSTERED ([idWaiter] ASC)
+CREATE TABLE [dbo].[Invoice](
+	[idInvoice] [int] IDENTITY(1,1) NOT NULL,
+	[invoiceNumber] [varchar](45) NULL,
+	[totalAmountWithTaxes] [decimal](10, 2) NULL,
+	[totalAmountWithoutTaxes] [decimal](10, 2) NULL,
+	[invoiceDate] [datetime] NULL,
+	[fkWaiter] [int] NULL FOREIGN KEY REFERENCES [Waiter](idWaiter),
+	[fkTable] [int] NULL FOREIGN KEY REFERENCES [Table]([idTable]),
+	[fkPaymentCond] [int] NULL FOREIGN KEY REFERENCES [PaymentCondition]([idPaymentCond]),
+ CONSTRAINT [PK_Invoice] PRIMARY KEY CLUSTERED ([idInvoice] ASC)
 ) ON [PRIMARY]
 GO
 
-ALTER TABLE [dbo].[Booking]  WITH CHECK ADD  CONSTRAINT [FK_Booking_Table] FOREIGN KEY([fkTable])
-REFERENCES [dbo].[Table] ([idTable])
-GO
-ALTER TABLE [dbo].[Booking] CHECK CONSTRAINT [FK_Booking_Table]
-GO
-ALTER TABLE [dbo].[Dish]  WITH CHECK ADD  CONSTRAINT [FK_Dish_DishType] FOREIGN KEY([fkDishType])
-REFERENCES [dbo].[DishType] ([idDishType])
-GO
-ALTER TABLE [dbo].[Dish] CHECK CONSTRAINT [FK_Dish_DishType]
-GO
-ALTER TABLE [dbo].[Dish]  WITH CHECK ADD  CONSTRAINT [FK_Dish_Menu] FOREIGN KEY([fkMenu])
-REFERENCES [dbo].[Menu] ([idMenu])
-GO
-ALTER TABLE [dbo].[Dish] CHECK CONSTRAINT [FK_Dish_Menu]
-GO
-ALTER TABLE [dbo].[Invoice]  WITH CHECK ADD  CONSTRAINT [FK_Invoice_PaymentCondition] FOREIGN KEY([fkPaymentCond])
-REFERENCES [dbo].[PaymentCondition] ([idPaymentCond])
-GO
-ALTER TABLE [dbo].[Invoice] CHECK CONSTRAINT [FK_Invoice_PaymentCondition]
-GO
-ALTER TABLE [dbo].[Invoice]  WITH CHECK ADD  CONSTRAINT [FK_Invoice_Table] FOREIGN KEY([fkTable])
-REFERENCES [dbo].[Table] ([idTable])
-GO
-ALTER TABLE [dbo].[Invoice] CHECK CONSTRAINT [FK_Invoice_Table]
-GO
-ALTER TABLE [dbo].[Invoice]  WITH CHECK ADD  CONSTRAINT [FK_Invoice_Waiter] FOREIGN KEY([fkWaiter])
-REFERENCES [dbo].[Waiter] ([idWaiter])
-GO
-ALTER TABLE [dbo].[Invoice] CHECK CONSTRAINT [FK_Invoice_Waiter]
-GO
-ALTER TABLE [dbo].[InvoiceDetail]  WITH CHECK ADD  CONSTRAINT [FK_InvoiceDetail_Dish] FOREIGN KEY([fkDish])
-REFERENCES [dbo].[Dish] ([idDish])
-GO
-ALTER TABLE [dbo].[InvoiceDetail] CHECK CONSTRAINT [FK_InvoiceDetail_Dish]
-GO
-ALTER TABLE [dbo].[InvoiceDetail]  WITH CHECK ADD  CONSTRAINT [FK_InvoiceDetail_Invoice] FOREIGN KEY([fkInvoice])
-REFERENCES [dbo].[Invoice] ([idInvoice])
-GO
-ALTER TABLE [dbo].[InvoiceDetail] CHECK CONSTRAINT [FK_InvoiceDetail_Invoice]
-GO
-ALTER TABLE [dbo].[InvoiceDetail]  WITH CHECK ADD  CONSTRAINT [FK_InvoiceDetail_Menu] FOREIGN KEY([fkMenu])
-REFERENCES [dbo].[Menu] ([idMenu])
-GO
-ALTER TABLE [dbo].[InvoiceDetail] CHECK CONSTRAINT [FK_InvoiceDetail_Menu]
-GO
-ALTER TABLE [dbo].[InvoiceDetail]  WITH CHECK ADD  CONSTRAINT [FK_InvoiceDetail_TaxRate] FOREIGN KEY([fkTaxRate])
-REFERENCES [dbo].[TaxRate] ([taxRateValue])
-GO
-ALTER TABLE [dbo].[InvoiceDetail] CHECK CONSTRAINT [FK_InvoiceDetail_TaxRate]
-GO
-ALTER TABLE [dbo].[Responsible]  WITH NOCHECK ADD  CONSTRAINT [FK_Responsible_Planning] FOREIGN KEY([fkPlanning])
-REFERENCES [dbo].[Planning] ([idPlanning])
-NOT FOR REPLICATION 
-GO
-ALTER TABLE [dbo].[Responsible] CHECK CONSTRAINT [FK_Responsible_Planning]
-GO
-ALTER TABLE [dbo].[Responsible]  WITH CHECK ADD  CONSTRAINT [FK_Responsible_Table] FOREIGN KEY([fkTable])
-REFERENCES [dbo].[Table] ([idTable])
-GO
-ALTER TABLE [dbo].[Responsible] CHECK CONSTRAINT [FK_Responsible_Table]
+CREATE TABLE [dbo].[InvoiceDetail](
+	[idInvoiceDetail] [int] IDENTITY(1,1) NOT NULL,
+	[quantity] [int] NULL,
+	[amountWithoutTaxes] [decimal](10, 2) NULL,
+	[fkInvoice] [int] NULL FOREIGN KEY REFERENCES [Invoice]([idInvoice]),
+	[fkTaxRate] [decimal](4, 2) NULL FOREIGN KEY REFERENCES [dbo].[TaxRate]([taxRateValue]),
+	[fkMenu] [int] NULL,
+	[fkDish] [int] NULL FOREIGN KEY REFERENCES [dbo].[Dish]([idDish]),
+ CONSTRAINT [PK_InvoiceDetail] PRIMARY KEY CLUSTERED ([idInvoiceDetail] ASC),
+ CHECK ([fkMenu] IS NOT NULL OR [fkDish] IS NOT NULL)
+) ON [PRIMARY]
 GO
 
 --data
@@ -259,3 +196,6 @@ insert into [Dish](dishDescription, AmountWithTaxes,fkDishType) values
 ('Opéra au café et chocolat',20,5),
 ('Symphonie de crèmes brûlées aux saveurs différentes',19,5),
 ('Bavarois de poires en verrine, émiettée de spéculoos',19,5);
+
+insert into [Invoice]([invoiceNumber]) values
+(1),(2),(3),(4),(5);
