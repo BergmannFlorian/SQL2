@@ -13,141 +13,256 @@ USE master
 GO
 SET NOCOUNT ON
 
--------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------
--- Suppression de la base de données
--------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------
-
-
-
--------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------
--- Création de la base de données
--------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------
-
---CREATE DATABASE .....
-
-
-
--------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------
--- Création des tables
--------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------
-
-
-USE Diner_restaurant_FAO
+alter database [Diner_restaurant_fbn] set single_user with rollback immediate
+DROP DATABASE IF EXISTS [Diner_restaurant_fbn]
 GO
 
-CREATE TABLE [Invoice] (
-	idInvoice int IDENTITY(1,1),
-	invoiceNumber varchar(45),
-	totalAmountWithTaxes decimal(10,2),
-	totalAmountWithoutTaxes decimal(10,2),
-	invoiceDate datetime, 
-	fkWaiter int,
-	fkTable int,
-	fkPaymentCond int);
+CREATE DATABASE [Diner_restaurant_fbn]
+GO
 
-CREATE TABLE InvoiceDetail (
-	idInvoiceDetail int IDENTITY(1,1),
-	quantity int,
-	amountWithoutTaxes decimal(10,2),
-	fkInvoice int, 
-	fkTaxRate decimal(4,2),
-	fkDish int);
-	
-CREATE TABLE Dish (
-	idDish int IDENTITY(1,1),
-	dishDescription varchar(100), 
-	fkDishType int, 
-	fkMenu int, 
-	AmountWithTaxes decimal(5,2));
-
-CREATE TABLE Menu (
-	idMenu int IDENTITY(1,1),
-	menuName varchar(50), 
-	amountWithTaxes decimal (5,2));
-
-CREATE TABLE DishType (
-	idDishType int,
-	DishTypeName varchar(100));
-
-CREATE TABLE TaxRate (
-	taxRateValue decimal(4,2), 
-	[description] varchar(100) );
-
-CREATE TABLE [Table] (
-	idTable int IDENTITY(1,1),
-	capacity tinyint);
+USE [Diner_restaurant_fbn]
+GO
 
 CREATE TABLE Waiter (
-	idWaiter int  IDENTITY(1,1),
-	firstName varchar(35),
-	lastName varchar(35));
+  [idWaiter] INT NOT NULL IDENTITY,
+  [firstName] VARCHAR(45) NULL,
+  [lastName] VARCHAR(45) NULL,
+  PRIMARY KEY ([idWaiter]))
+;
 
 CREATE TABLE Planning (
-	idPlanning int IDENTITY(1,1),
-	dateWork datetime,
-	fkWaiter int);
+  [idPlanning] INT NOT NULL IDENTITY,
+  [dataWork] DATETIME2(0) NULL,
+  [fkWaiter] INT NOT NULL,
+  PRIMARY KEY ([idPlanning]),
+  CONSTRAINT [fk_Planning_Waiter1]
+    FOREIGN KEY ([fkWaiter])
+    REFERENCES Waiter ([idWaiter])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+CREATE INDEX [fk_Planning_Waiter1_idx] ON Planning ([fkWaiter] ASC);
 
-CREATE TABLE Responsible (
-	fkPlanning int,
-	fkTable int);
+CREATE TABLE [Table] (
+  [idTable] INT NOT NULL IDENTITY,
+  [capacity] SMALLINT NULL,
+  PRIMARY KEY ([idTable]))
+;
 
 CREATE TABLE PaymentCondition (
-	idPaymentCond int IDENTITY(1,1),
-	description varchar(100),
-	reduction decimal(4,2));
+  [idPaymentCondition] INT NOT NULL IDENTITY,
+  [description] VARCHAR(100) NULL,
+  [reduction] DECIMAL(10,2) NULL,
+  PRIMARY KEY ([idPaymentCondition]))
+;
+
+CREATE TABLE Invoice (
+  [idInvoice] INT NOT NULL IDENTITY,
+  [InvoiceNumber] INT NULL,
+  [totalAmountWithTaxes] DECIMAL(10,2) NULL,
+  [totalAmountWithoutTaxes] DECIMAL(10,2) NULL,
+  [InvoiceDate] DATE NULL,
+  [fkPaymentCond] INT NOT NULL,
+  [fkTable] INT NOT NULL,
+  [fkWaiter] INT NOT NULL,
+  PRIMARY KEY ([idInvoice])
+  ,
+  CONSTRAINT [fk_Invoice_PaymentCondition1]
+    FOREIGN KEY ([fkPaymentCond])
+    REFERENCES PaymentCondition ([idPaymentCondition])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_Invoice_Table1]
+    FOREIGN KEY ([fkTable])
+    REFERENCES [Table] ([idTable])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_Invoice_Waiter1]
+    FOREIGN KEY ([fkWaiter])
+    REFERENCES Waiter ([idWaiter])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE INDEX [fk_Invoice_PaymentCondition1_idx] ON Invoice ([fkPaymentCond] ASC);
+CREATE INDEX [fk_Invoice_Table1_idx] ON Invoice ([fkTable] ASC);
+CREATE INDEX [fk_Invoice_Waiter1_idx] ON Invoice ([fkWaiter] ASC);
+
+CREATE TABLE TaxRate (
+  [taxRateValue] INT NOT NULL IDENTITY,
+  [description] VARCHAR(100) NULL,
+  PRIMARY KEY ([taxRateValue]))
+;
+
+CREATE TABLE [DishType] (
+  [idDischType] DECIMAL(4,2) NOT NULL,
+  [DishTypeName] VARCHAR(100) NULL,
+  PRIMARY KEY ([idDischType]))
+;
+
+CREATE TABLE Menu (
+  [idMenu] INT NOT NULL IDENTITY,
+  [menuName] VARCHAR(50) NULL,
+  [ amountWithTaxes] DECIMAL(10,2) NULL,
+  PRIMARY KEY ([idMenu]))
+;
+
+CREATE TABLE Dish (
+  [idDish] INT NOT NULL IDENTITY,
+  [dishDescription] VARCHAR(100) NULL,
+  [fkDishType] DECIMAL(4,2) NOT NULL,
+  [fkMenu] INT NOT NULL,
+  [AmountWithTaxes] DECIMAL(5,2) NULL,
+  PRIMARY KEY ([idDish]),
+  CONSTRAINT [fk_Dish_DischType1]
+    FOREIGN KEY ([fkDishType])
+    REFERENCES DishType ([idDischType])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_Dish_Menu1]
+    FOREIGN KEY ([fkMenu])
+    REFERENCES Menu ([idMenu])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE INDEX [fk_Dish_DischType1_idx] ON Dish ([fkDishType] ASC);
+CREATE INDEX [fk_Dish_Menu1_idx] ON Dish ([fkMenu] ASC);
+
+CREATE TABLE InvoiceDetail (
+  [idInvoiceDetail] INT NOT NULL IDENTITY,
+  [quantity] INT NULL,
+  [amountWithTaxes] DECIMAL(10,2) NULL,
+  [fkTaxRate] INT NOT NULL,
+  [fkInvoice] INT NOT NULL,
+  [fkDish] INT NOT NULL,
+  [fkMenu] INT NOT NULL,
+  PRIMARY KEY ([idInvoiceDetail]),
+  CONSTRAINT [fk_InvoiceDetail_TaxRate1]
+    FOREIGN KEY ([fkTaxRate])
+    REFERENCES TaxRate ([taxRateValue])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_InvoiceDetail_Invoice1]
+    FOREIGN KEY ([fkInvoice])
+    REFERENCES Invoice ([idInvoice])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_InvoiceDetail_Dish1]
+    FOREIGN KEY ([fkDish])
+    REFERENCES Dish ([idDish])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_InvoiceDetail_Menu1]
+    FOREIGN KEY ([fkMenu])
+    REFERENCES Menu ([idMenu])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
+
+CREATE INDEX [fk_InvoiceDetail_TaxRate1_idx] ON InvoiceDetail ([fkTaxRate] ASC);
+CREATE INDEX [fk_InvoiceDetail_Invoice1_idx] ON InvoiceDetail ([fkInvoice] ASC);
+CREATE INDEX [fk_InvoiceDetail_Dish1_idx] ON InvoiceDetail ([fkDish] ASC);
+CREATE INDEX [fk_InvoiceDetail_Menu1_idx] ON InvoiceDetail ([fkMenu] ASC);
 
 CREATE TABLE Booking (
-	idBooking int IDENTITY(1,1),
-	dateBooking datetime,
-	nbPers tinyint,
-	phonenumber varchar(20),
-	lastname varchar(35),
-	firstname varchar(35),
-	fkTable int);
+  [idBooking] INT NOT NULL IDENTITY,
+  [dateBooking] DATETIME2(0) NULL,
+  [nbPers] SMALLINT NULL,
+  [phonenumber] VARCHAR(20) NULL,
+  [lastname] VARCHAR(35) NULL,
+  [firstname] VARCHAR(35) NULL,
+  [fkTable] INT NOT NULL,
+  PRIMARY KEY ([idBooking])
+  ,
+  CONSTRAINT [fk_Booking_Table1]
+    FOREIGN KEY ([fkTable])
+    REFERENCES [Table] ([idTable])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
 
-GO
+CREATE INDEX [fk_Booking_Table1_idx] ON Booking ([fkTable] ASC);
 
+CREATE TABLE Responsible (
+  [fkPlanning] INT NOT NULL,
+  [fkTablle] INT NOT NULL,
+  PRIMARY KEY ([fkPlanning], [fkTablle])
+  ,
+  CONSTRAINT [fk_Planning_has_Table_Planning]
+    FOREIGN KEY ([fkPlanning])
+    REFERENCES Planning ([idPlanning])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT [fk_Planning_has_Table_Table1]
+    FOREIGN KEY ([fkTablle])
+    REFERENCES [Table] ([idTable])
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+;
 
+CREATE INDEX [fk_Planning_has_Table_Table1_idx] ON Responsible ([fkTablle] ASC);
+CREATE INDEX [fk_Planning_has_Table_Planning_idx] ON Responsible ([fkPlanning] ASC);
 
 --data
-insert into waiter(firstname, lastName) values ('Eva', 'Risselle');
-insert into waiter(firstname, lastName) values ('Marylou', 'Koume');
-insert into waiter(firstname, lastName) values ('Magali', 'Maçon');
-insert into Waiter (firstName, lastName) values ('Harry', 'Cover');
-insert into Waiter (firstName, lastName) values ('Tom', 'Hatte');
-insert into Waiter (firstName, lastName) values ('Sam', 'Chatouille');
+insert into [waiter] (firstname, lastName) values 
+('Eva', 'Risselle'),
+('Marylou', 'Koume'),
+('Magali', 'Maçon'),
+('Harry', 'Cover'),
+('Tom', 'Hatte'),
+('Sam', 'Chatouille');
 
-insert into PaymentCondition (description, reduction) values ('Passeport gourmand pour 2 personnes', 0.5);
-insert into PaymentCondition (description, reduction) values ('Passeport gourmand pour 3 personnes', 0.33);
-insert into PaymentCondition (description, reduction) values ('Passeport gourmand pour 4 personnes', 0.25);
-insert into PaymentCondition (description, reduction) values ('CPNV', 0.1);
-insert into PaymentCondition (description, reduction) values ('La Poste', 0.05);
-insert into PaymentCondition (description, reduction) values ('Philip Morris', 0.1);
+insert into [PaymentCondition] (description, reduction) values 
+('Passeport gourmand pour 2 personnes', 0.5),
+('Passeport gourmand pour 3 personnes', 0.33),
+('Passeport gourmand pour 4 personnes', 0.25),
+('CPNV', 0.1),
+('La Poste', 0.05),
+('Philip Morris', 0.1);
 
-insert into [Table] (capacity) values (2);
-insert into [Table] (capacity) values (4);
-insert into [Table] (capacity) values (6);
-insert into [Table] (capacity) values (2);
-insert into [Table] (capacity) values (2);
-insert into [Table] (capacity) values (4);
-insert into [Table] (capacity) values (4);
-insert into [Table] (capacity) values (6);
-insert into [Table] (capacity) values (2);
-insert into [Table] (capacity) values (2);
-insert into [Table] (capacity) values (4);
-insert into [Table] (capacity) values (4);
-insert into [Table] (capacity) values (2);
-insert into [Table] (capacity) values (6);
+insert into [Table](capacity) values 
+(2),
+(4),
+(6),
+(2),
+(2),
+(4),
+(4),
+(6),
+(2),
+(2),
+(4),
+(4),
+(2),
+(6);
 
+insert into [TaxRate](taxRateValue, description) values 
+(7.7, 'Taxe suisse standard'),
+(2.5, 'Taxe réduit'),
+(3.7, 'Taxe spécial hébergement');
 
+insert into [DishType](DishTypeName) values
+('Entrées'),
+('Poissons'),
+('Viande'),
+('Fromages'),
+('Dessert');
 
-insert into TaxRate values (7.7, 'Taxe suisse standard');
-insert into TaxRate values (2.5, 'Taxe réduit');
-insert into TaxRate values (3.7, 'Taxe spécial hébergement');
-
+insert into [Dish](dishDescription, AmountWithTaxes, fkDishType) values
+('Risotto tessinois bio aux truffes de Bourgogne et mascarpone',31,1),
+('Gravlax de chevreuil aux citrons confits et câprons',30,1),
+('Terrine de foie gras aux figues et pain d’épices',29,1),
+('Tataki de thon aux pistaches de Bronte',45,2),
+('Scalopines de saumon du Tessin, beurre blanc',46,2),
+('Noix Saint-Jacques et gambas en brochette de romarin',49,2),
+('Médaillons de renne poivrade',54,3),
+('Suprême de canard sauvage à l’orange',48,3),
+('Ris de veau façon saltimbocca à la sauge',45,3),
+('Tournedos de boeuf, vierge automnale aux marrons et pignons',50,3),
+('Selle de chevreuil à la raisineé (dès 2 pers.)',52,3),
+('Assiette de fromages',21,4),
+('Chaud-froid au chocolat noir, sorbet aux poires',19,5),
+('Opéra au café et chocolat',20,5),
+('Symphonie de crèmes brûlées aux saveurs différentes',19,5),
+('Bavarois de poires en verrine, émiettée de spéculoos',19,5);
