@@ -124,9 +124,9 @@ GO
 CREATE TABLE [dbo].[InvoiceDetail](
 	[idInvoiceDetail] [int] IDENTITY(1,1) NOT NULL,
 	[quantity] [int] NULL,
-	[amountWithoutTaxes] [decimal](10, 2) NULL,
-	[fkInvoice] [int] NULL FOREIGN KEY REFERENCES [Invoice]([idInvoice]),
-	[fkTaxRate] [decimal](4, 2) NULL FOREIGN KEY REFERENCES [dbo].[TaxRate]([taxRateValue]),
+	[amountWithoutTaxes] [decimal](10, 2) NOT NULL,
+	[fkInvoice] [int] NOT NULL FOREIGN KEY REFERENCES [Invoice]([idInvoice]),
+	[fkTaxRate] [decimal](4, 2) NOT NULL FOREIGN KEY REFERENCES [dbo].[TaxRate]([taxRateValue]),
 	[fkMenu] [int] NULL,
 	[fkDish] [int] NULL FOREIGN KEY REFERENCES [dbo].[Dish]([idDish]),
  CONSTRAINT [PK_InvoiceDetail] PRIMARY KEY CLUSTERED ([idInvoiceDetail] ASC),
