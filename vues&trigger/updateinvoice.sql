@@ -6,6 +6,7 @@ GO
 
 CREATE TRIGGER trg_InvoiceDetail ON  [InvoiceDetail] AFTER INSERT,DELETE,UPDATE AS 
 DECLARE @fkInvoice AS int
+-- INSERT
 DECLARE cInserted CURSOR FOR SELECT fkInvoice FROM inserted
 OPEN cInserted
 FETCH cInserted INTO @fkInvoice
@@ -25,6 +26,7 @@ WHILE (@@FETCH_STATUS=0) BEGIN
 END
 CLOSE cInserted
 DEALLOCATE cInserted
+-- DELETE
 DECLARE cDeleted CURSOR FOR SELECT fkInvoice FROM deleted
 OPEN cDeleted
 FETCH cDeleted INTO @fkInvoice
