@@ -7,7 +7,7 @@ BEGIN
     IF(@dayNumber > 0 AND @dayNumber <= 365)
         BEGIN
             SET @sum = (SELECT SUM(totalAmountWithTaxes) from invoice
-                        WHERE CONVERT(DATE, InvoiceDate) BETWEEN CONVERT(DATE, GETDATE()) AND CONVERT(DATE, GETDATE() - @dayNumber))
+                WHERE CONVERT(DATE, InvoiceDate) BETWEEN CONVERT(DATE, GETDATE()) AND CONVERT(DATE, GETDATE() - @dayNumber))
             INSERT INTO @Recette(Recette) VALUES (@sum);
         END
     ELSE 
