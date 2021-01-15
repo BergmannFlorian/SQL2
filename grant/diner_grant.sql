@@ -1,0 +1,61 @@
+use Diner_restaurant_fbn
+GO
+
+ -- Guest
+CREATE LOGIN guest1
+WITH PASSWORD = 'guest',
+CHECK_EXPIRATION = OFF, CHECK_POLICY = OFF, DEFAULT_DATABASE=Diner_restaurant_fbn
+GO
+CREATE USER guest1 FOR LOGIN guest1
+GO
+GRANT SELECT ON [table] TO guest1
+GRANT SELECT ON booking TO guest1
+GRANT SELECT ON Reservations7ProchainsJours TO guest1
+GO
+ -- Joe
+CREATE LOGIN Joe
+WITH PASSWORD = 'ch@Nge2-me' MUST_CHANGE,
+CHECK_EXPIRATION = ON, CHECK_POLICY = ON, DEFAULT_DATABASE=Diner_restaurant_fbn
+GO
+CREATE USER Joe FOR LOGIN Joe
+GO
+GRANT INSERT ON DATABASE::[Diner_restaurant_fbn] TO Joe
+GO
+ -- Jack
+CREATE LOGIN Jack
+WITH PASSWORD = 'ch@Nge2-me' MUST_CHANGE,
+CHECK_EXPIRATION = ON, CHECK_POLICY = ON, DEFAULT_DATABASE=Diner_restaurant_fbn
+GO
+CREATE USER Jack FOR LOGIN Jack
+GO
+GRANT INSERT ON DATABASE::[Diner_restaurant_fbn] TO Jack
+GO
+ -- William
+CREATE LOGIN William
+WITH PASSWORD = 'ch@Nge2-me' MUST_CHANGE,
+CHECK_EXPIRATION = ON, CHECK_POLICY = ON, DEFAULT_DATABASE=Diner_restaurant_fbn
+GO
+CREATE USER William FOR LOGIN William
+GO
+GRANT INSERT ON DATABASE::[Diner_restaurant_fbn] TO William
+GRANT SELECT ON dish TO William
+GRANT CREATE VIEW TO William
+GO
+ -- Awrell
+CREATE LOGIN Averell
+WITH PASSWORD = 'ch@Nge2-me' MUST_CHANGE,
+CHECK_EXPIRATION = ON, CHECK_POLICY = ON, DEFAULT_DATABASE=Diner_restaurant_fbn
+GO
+CREATE USER Averell FOR LOGIN Averell
+GO
+GRANT UPDATE ON Waiter(firstName) TO Averell
+GO
+ -- RestoApp
+CREATE LOGIN RestoApp
+WITH PASSWORD = 'Pa$$w0rd',
+CHECK_EXPIRATION = ON, CHECK_POLICY = ON, DEFAULT_DATABASE=Diner_restaurant_fbn
+GO
+CREATE USER RestoApp FOR LOGIN RestoApp
+GO
+GRANT SELECT, INSERT, ALTER ON DATABASE::[Diner_restaurant_fbn] TO RestoApp
+GO

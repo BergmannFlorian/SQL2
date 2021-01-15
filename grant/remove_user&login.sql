@@ -1,0 +1,12 @@
+DROP LOGIN guest1;
+DROP USER guest1;
+DROP LOGIN Joe;
+DROP USER Joe;
+DROP LOGIN Jack;
+DROP USER Jack;
+DROP LOGIN William;
+DROP USER William;
+DROP LOGIN Averell;
+DROP USER Averell;
+DROP LOGIN RestoApp;
+DROP USER RestoApp;
